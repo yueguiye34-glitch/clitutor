@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini CLI 奇幻旅程：從零開始的指令魔法</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Syne:wght@700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #05070a;
+            --surface-color: #11141b;
+            --accent-color: #00f2ff;
+            --accent-glow: rgba(0, 242, 255, 0.4);
+            --text-primary: #e0e6ed;
+            --text-secondary: #94a3b8;
+            --success-color: #00ff9d;
+            --card-radius: 24px;
+            --transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Syne', sans-serif;
+            letter-spacing: -0.02em;
+        }
+
+        /* 背景裝飾 */
+        .bg-mesh {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 10% 10%, rgba(0, 242, 255, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(0, 255, 157, 0.05) 0%, transparent 40%);
+        }
+
+        /* 進度條 */
+        #progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-color), var(--success-color));
+            width: 0%;
+            z-index: 1000;
+            transition: width 0.2s;
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 80px 24px;
+        }
+
+        /* 標題區 */
+        header {
+            text-align: center;
+            margin-bottom: 100px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 1s forwards;
+        }
+
+        header h1 {
+            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #fff 0%, #00f2ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.1;
+        }
+
+        header p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* 教學步驟卡片 */
+        section {
+            margin-bottom: 120px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: var(--transition);
+        }
+
+        section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .step-card {
+            background: var(--surface-color);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: var(--card-radius);
+            padding: 48px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .step-number {
+            position: absolute;
+            top: -20px;
+            right: 20px;
+            font-size: 8rem;
+            font-weight: 800;
+            font-family: 'Syne';
+            color: rgba(255, 255, 255, 0.03);
+            pointer-events: none;
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        h2::before {
+            content: '';
+            width: 8px;
+            height: 32px;
+            background: var(--accent-color);
+            border-radius: 4px;
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .content-grid {
+            display: grid;
+            gap: 32px;
+        }
+
+        /* 指令樣式 */
+        .command-box {
+            background: #000;
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'Fira Code', monospace;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            group: hover;
+        }
+
+        .command-text {
+            color: var(--success-color);
+            font-size: 0.95rem;
+        }
+
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: var(--transition);
+        }
+
+        .copy-btn:hover {
+            background: var(--accent-color);
+            color: var(--bg-color);
+        }
+
+        /* 下載按鈕連結 */
+        .link-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .download-link {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: var(--transition);
+        }
+
+        .download-link:hover {
+            background: rgba(0, 242, 255, 0.05);
+            border-color: var(--accent-color);
+            transform: translateY(-4px);
+        }
+
+        .download-link .label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .download-link .title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        /* 列表 */
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        li {
+            position: relative;
+            padding-left: 28px;
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+        }
+
+        li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        /* 互動提示 */
+        .hint {
+            background: rgba(255, 153, 0, 0.1);
+            border-left: 4px solid #ff9900;
+            padding: 16px 24px;
+            border-radius: 0 12px 12px 0;
+            margin-top: 24px;
+            font-size: 0.9rem;
+        }
+
+        /* 頁尾 */
+        footer {
+            text-align: center;
+            padding: 60px 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 模擬終端機預覽 */
+        .terminal-preview {
+            background: #000;
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: #fff;
+            margin-top: 16px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+        .term-green { color: var(--success-color); }
+        .term-gray { color: #666; }
+
+    </style>
+</head>
+<body>
+    <div id="progress-bar"></div>
+    <div class="bg-mesh"></div>
+
+    <div class="container">
+        <header>
+            <h1>Gemini CLI<br>奇幻旅程</h1>
+            <p>一步一步，將你的終端機打造成最強大的 AI 工作坊。專為初學者設計的互動式指南。</p>
+        </header>
+
+        <!-- Step 1 -->
+        <section id="step1">
+            <div class="step-card">
+                <div class="step-number">01</div>
+                <h2>前置作業</h2>
+                <div class="content-grid">
+                    <p>在開始之前，我們需要先在你的電腦中安裝兩位強大的助手：Node.js 與 Git。</p>
+                    <div class="link-grid">
+                        <a href="https://nodejs.org/en/blog/release/v24.14.1" target="_blank" class="download-link">
+                            <span class="label">穩定環境</span>
+                            <span class="title">1. 安裝 Node.js</span>
+                        </a>
+                        <a href="https://git-scm.com/" target="_blank" class="download-link">
+                            <span class="label">版本控制</span>
+                            <span class="title">2. 安裝 Git</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 2 -->
+        <section id="step2">
+            <div class="step-card">
+                <div class="step-number">02</div>
+                <h2>安裝 Gemini CLI</h2>
+                <div class="content-grid">
+                    <p>萬事俱備！現在讓我們透過終端機（命令提示字元）來召喚 Gemini CLI。</p>
+                    <ul>
+                        <li>在電腦中搜尋並打開「命令提示字元 (CMD)」或「PowerShell」。</li>
+                        <li>輸入以下指令並按下 <kbd>Enter</kbd>：</li>
+                    </ul>
+                    <div class="command-box">
+                        <span class="command-text">npm install -g @google/gemini-cli</span>
+                        <button class="copy-btn" onclick="copyCommand(this)">複製指令</button>
+                    </div>
+                    <div class="terminal-preview">
+                        <span class="term-gray">> npm install -g @google/gemini-cli</span><br>
+                        <span class="term-green">added 592 packages in 36s</span><br>
+                        <span class="term-gray">成功！你的 AI 助手已就位。</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 3 -->
+        <section id="step3">
+            <div class="step-card">
+                <div class="step-number">03</div>
+                <h2>啟動你的 AI 助手</h2>
+                <div class="content-grid">
+                    <p>現在，我們要把 Gemini 帶到你的工作目錄中。</p>
+                    <ul>
+                        <li>到檔案總管，複製你想要進行專案的資料夾路徑。</li>
+                        <li>在終端機輸入 <code>cd</code> 加上空格，然後貼上路徑：</li>
+                    </ul>
+                    <div class="command-box">
+                        <span class="command-text">cd C:\你的\專案\路徑</span>
+                        <button class="copy-btn" onclick="copyCommand(this)">示範指令</button>
+                    </div>
+                    <p>接著，輸入以下指令正式啟動：</p>
+                    <div class="command-box">
+                        <span class="command-text">gemini</span>
+                        <button class="copy-btn" onclick="copyCommand(this)">啟動 Gemini</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 4 -->
+        <section id="step4">
+            <div class="step-card">
+                <div class="step-number">04</div>
+                <h2>初試啼聲</h2>
+                <div class="content-grid">
+                    <p>Gemini CLI 不僅擁有強大的大腦，還能直接操控你的電腦文件。</p>
+                    <div class="hint">
+                        💡 <strong>差異在於：</strong><br>
+                        1. 他能直接在你的資料夾生成檔案。<br>
+                        2. 他擅長將複雜任務拆解成多個步驟。
+                    </div>
+                    <p><strong>試試看這樣下指令：</strong></p>
+                    <div class="command-box">
+                        <span class="command-text">請先寫一份「飼養老虎在太空站競速對戰的末日科幻派對遊戲」企劃書。寫完後，另外做一個互動式網頁來解說這個企劃。</span>
+                        <button class="copy-btn" onclick="copyCommand(this)">複製挑戰</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 5 -->
+        <section id="step5">
+            <div class="step-card">
+                <div class="step-number">05</div>
+                <h2>安裝延伸功能 & Skill</h2>
+                <div class="content-grid">
+                    <p>想讓 Gemini 更強大嗎？安裝延伸功能是必經之路。請先輸入 <code>exit</code> 退出 gemini 模式。</p>
+                    
+                    <h3>1. Google 雲端全家桶 (Workspace)</h3>
+                    <div class="command-box">
+                        <span class="command-text">gemini extensions install https://github.com/gemini-cli-extensions/workspace</span>
+                        <button class="copy-btn" onclick="copyCommand(this)">安裝 Workspace</button>
+                    </div>
+
+                    <h3>2. 前端設計 Skill (Frontend Design)</h3>
+                    <div class="command-box">
+                        <span class="command-text">gemini extensions install https://github.com/buildatscale-tv/gemini-skills</span>
+                        <button class="copy-btn" onclick="copyCommand(this)">安裝前端 Skill</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 6 -->
+        <section id="step6">
+            <div class="step-card">
+                <div class="step-number">06</div>
+                <h2>終極驗證</h2>
+                <div class="content-grid">
+                    <p>現在，重新啟動 <code>gemini</code> 並再次執行剛才的「太空老虎遊戲」指令。你會發現，有了前端 Skill 的幫助，生成的網頁將會比剛才更漂亮、更專業！</p>
+                    <p class="term-green" style="text-align: center; font-weight: bold; font-size: 1.5rem; margin-top: 20px;">
+                        恭喜！你已經掌握了 Gemini CLI 的魔法。
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>設計並製作於 2026 | 專為 Gemini CLI 愛好者打造</p>
+        </footer>
+    </div>
+
+    <script>
+        // 滾動顯示動畫
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('section').forEach(section => {
+            observer.observe(section);
+        });
+
+        // 進度條控制
+        window.onscroll = function() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        };
+
+        // 複製功能
+        function copyCommand(btn) {
+            const text = btn.previousElementSibling.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = btn.innerText;
+                btn.innerText = '已複製！';
+                btn.style.background = 'var(--success-color)';
+                btn.style.color = '#000';
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.background = 'rgba(255, 255, 255, 0.05)';
+                    btn.style.color = 'var(--text-secondary)';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
