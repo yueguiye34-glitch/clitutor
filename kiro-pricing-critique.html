@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kiro 定價策略批評 — 從 Credit 制到 Token 制的爭議</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --primary: #1a1a2e;
+    --accent: #e94560;
+    --accent2: #0f3460;
+    --light: #f8f9fa;
+    --gold: #f0a500;
+    --text-dark: #1a1a2e;
+    --text-light: #ffffff;
+    --gradient-dark: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    --gradient-accent: linear-gradient(135deg, #e94560 0%, #c23152 100%);
+    --gradient-warm: linear-gradient(135deg, #f0a500 0%, #e94560 100%);
+  }
+
+  body {
+    font-family: 'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+    background: #0d0d0d;
+    color: var(--text-dark);
+  }
+
+  .slide {
+    width: 100vw;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 80px;
+    position: relative;
+    overflow: hidden;
+    page-break-after: always;
+  }
+
+  /* Slide 1 - Title */
+  .slide-title {
+    background: var(--gradient-dark);
+    text-align: center;
+  }
+  .slide-title::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 70%, rgba(233,69,96,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 70% 30%, rgba(15,52,96,0.3) 0%, transparent 50%);
+    animation: float 20s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(-20px, -20px); }
+  }
+  .slide-title h1 {
+    font-size: 3.2rem;
+    color: var(--text-light);
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+    line-height: 1.3;
+  }
+  .slide-title h1 span {
+    background: var(--gradient-warm);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .slide-title .subtitle {
+    font-size: 1.4rem;
+    color: rgba(255,255,255,0.7);
+    position: relative;
+    z-index: 1;
+    margin-top: 10px;
+  }
+  .slide-title .meta {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.4);
+    position: relative;
+    z-index: 1;
+    margin-top: 40px;
+  }
+
+  /* Slide 2+ - Content slides */
+  .slide-content {
+    background: var(--light);
+    align-items: flex-start;
+  }
+  .slide-content h2 {
+    font-size: 2.2rem;
+    color: var(--primary);
+    margin-bottom: 40px;
+    padding-bottom: 15px;
+    border-bottom: 4px solid var(--accent);
+    width: 100%;
+  }
+  .slide-content h3 {
+    font-size: 1.4rem;
+    color: var(--accent2);
+    margin: 20px 0 10px;
+  }
+  .slide-content p, .slide-content li {
+    font-size: 1.15rem;
+    line-height: 1.8;
+    color: #333;
+  }
+  .slide-content ul {
+    list-style: none;
+    padding-left: 0;
+  }
+  .slide-content ul li {
+    padding: 10px 0 10px 35px;
+    position: relative;
+  }
+  .slide-content ul li::before {
+    content: '▸';
+    position: absolute;
+    left: 10px;
+    color: var(--accent);
+    font-weight: bold;
+  }
+
+  /* Dark content slide */
+  .slide-dark {
+    background: var(--gradient-dark);
+    color: var(--text-light);
+  }
+  .slide-dark h2 {
+    color: var(--text-light);
+    border-bottom-color: var(--gold);
+  }
+  .slide-dark p, .slide-dark li {
+    color: rgba(255,255,255,0.9);
+  }
+  .slide-dark ul li::before {
+    color: var(--gold);
+  }
+
+  /* Pricing comparison table */
+  .pricing-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 30px 0;
+    font-size: 1rem;
+  }
+  .pricing-table th {
+    background: var(--accent2);
+    color: white;
+    padding: 14px 18px;
+    text-align: center;
+    font-weight: 600;
+  }
+  .pricing-table td {
+    padding: 12px 18px;
+    text-align: center;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  .pricing-table tr:nth-child(even) td {
+    background: #f4f6f8;
+  }
+  .pricing-table .highlight-bad {
+    color: var(--accent);
+    font-weight: bold;
+  }
+  .pricing-table .highlight-good {
+    color: #27ae60;
+    font-weight: bold;
+  }
+
+  /* Quote block */
+  .quote {
+    background: rgba(233,69,96,0.08);
+    border-left: 5px solid var(--accent);
+    padding: 25px 30px;
+    margin: 25px 0;
+    border-radius: 0 12px 12px 0;
+    font-style: italic;
+    font-size: 1.1rem;
+    line-height: 1.7;
+  }
+  .quote .source {
+    display: block;
+    margin-top: 10px;
+    font-style: normal;
+    font-size: 0.9rem;
+    color: #666;
+  }
+
+  .slide-dark .quote {
+    background: rgba(240,165,0,0.1);
+    border-left-color: var(--gold);
+  }
+
+  /* Stats grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    width: 100%;
+    margin: 30px 0;
+  }
+  .stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border-top: 4px solid var(--accent);
+  }
+  .stat-card .number {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: var(--accent);
+    display: block;
+  }
+  .stat-card .label {
+    font-size: 0.95rem;
+    color: #666;
+    margin-top: 8px;
+  }
+
+  /* Timeline */
+  .timeline {
+    width: 100%;
+    position: relative;
+    padding-left: 40px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--accent);
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+    padding-left: 30px;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -32px;
+    top: 8px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid white;
+    box-shadow: 0 0 0 3px var(--accent);
+  }
+  .timeline-item .date {
+    font-size: 0.85rem;
+    color: var(--accent);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .timeline-item .event {
+    font-size: 1.1rem;
+    margin-top: 5px;
+    color: #333;
+  }
+
+  /* Comparison columns */
+  .comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    width: 100%;
+    margin: 30px 0;
+  }
+  .comparison-col {
+    padding: 30px;
+    border-radius: 16px;
+  }
+  .comparison-col.before {
+    background: #e8f5e9;
+    border: 2px solid #4caf50;
+  }
+  .comparison-col.after {
+    background: #fce4ec;
+    border: 2px solid var(--accent);
+  }
+  .comparison-col h3 {
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+  }
+  .comparison-col.before h3 { color: #2e7d32; }
+  .comparison-col.after h3 { color: var(--accent); }
+
+  /* Footer / page number */
+  .slide-number {
+    position: absolute;
+    bottom: 25px;
+    right: 40px;
+    font-size: 0.85rem;
+    color: rgba(0,0,0,0.3);
+  }
+  .slide-dark .slide-number {
+    color: rgba(255,255,255,0.3);
+  }
+
+  /* Impact list with icons */
+  .impact-list {
+    width: 100%;
+  }
+  .impact-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 20px 0;
+    border-bottom: 1px solid #eee;
+  }
+  .impact-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    background: rgba(233,69,96,0.1);
+  }
+  .impact-text h4 {
+    font-size: 1.1rem;
+    color: var(--primary);
+    margin-bottom: 5px;
+  }
+  .impact-text p {
+    font-size: 0.95rem;
+    color: #555;
+    line-height: 1.6;
+  }
+
+  /* Dark slide table fix - ensure text is visible on dark backgrounds */
+  .slide-dark .pricing-table td {
+    color: rgba(255,255,255,0.9);
+    border-bottom-color: rgba(255,255,255,0.15);
+  }
+  .slide-dark .pricing-table tr:nth-child(even) td {
+    background: rgba(255,255,255,0.05);
+  }
+  .slide-dark .pricing-table td strong {
+    color: #ffffff;
+  }
+  .slide-dark .pricing-table .highlight-good {
+    color: #6dff6d;
+  }
+  .slide-dark .pricing-table .highlight-bad {
+    color: #ff6b6b;
+  }
+
+  /* Navigation Tab Bar */
+  .nav-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    background: rgba(26, 26, 46, 0.95);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    height: 50px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    overflow-x: auto;
+    gap: 4px;
+  }
+  .nav-bar a {
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    font-size: 0.8rem;
+    padding: 8px 14px;
+    border-radius: 6px;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+  .nav-bar a:hover {
+    background: rgba(233,69,96,0.3);
+    color: #ffffff;
+  }
+  .nav-bar a.active {
+    background: var(--accent);
+    color: #ffffff;
+    font-weight: 600;
+  }
+  .nav-bar .nav-label {
+    color: var(--gold);
+    font-weight: 700;
+    font-size: 0.8rem;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+
+  /* Offset slides for fixed nav */
+  .slide {
+    scroll-margin-top: 50px;
+  }
+  body {
+    padding-top: 50px;
+  }
+
+  /* Print styles */
+  @media print {
+    .slide { page-break-after: always; }
+    .nav-bar { display: none; }
+    body { padding-top: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Navigation Tab Bar -->
+<nav class="nav-bar">
+  <span class="nav-label">▶ 頁面</span>
+  <a href="#slide-1" class="active">1. 封面</a>
+  <a href="#slide-2">2. 大綱</a>
+  <a href="#slide-3">3. 背景</a>
+  <a href="#slide-4">4. 時間線</a>
+  <a href="#slide-5">5. 方案對比</a>
+  <a href="#slide-6">6. 社群反應</a>
+  <a href="#slide-7">7. 核心批評</a>
+  <a href="#slide-8">8. 實際影響</a>
+  <a href="#slide-9">9. 競品比較</a>
+  <a href="#slide-10">10. 結論</a>
+</nav>
+
+<!-- ==================== SLIDE 1: Title ==================== -->
+<div id="slide-1" class="slide slide-title">
+  <h1>Kiro 定價策略的<span>致命轉向</span></h1>
+  <p class="subtitle">從 Credit 制走向 Token 制 — 開發者社群的集體反彈</p>
+  <p class="meta">2025–2026 網路輿論分析報告</p>
+</div>
+
+<!-- ==================== SLIDE 2: Agenda ==================== -->
+<div id="slide-2" class="slide slide-content">
+  <h2>報告大綱</h2>
+  <ul>
+    <li><strong>背景回顧</strong> — Kiro 的崛起與初始定價承諾</li>
+    <li><strong>定價變革時間線</strong> — 從簡單互動制到複雜 Token 計費</li>
+    <li><strong>新舊方案對比</strong> — 數字說明一切</li>
+    <li><strong>社群反應</strong> — 「錢包毀滅性悲劇」的由來</li>
+    <li><strong>核心批評</strong> — 五大爭議焦點</li>
+    <li><strong>實際影響</strong> — 各類使用者的困境</li>
+    <li><strong>競品比較</strong> — 市場正在懲罰 Kiro</li>
+    <li><strong>結論與建議</strong></li>
+  </ul>
+  <span class="slide-number">2 / 10</span>
+</div>
+
+<!-- ==================== SLIDE 3: Background ==================== -->
+<div id="slide-3" class="slide slide-content">
+  <h2>背景：Kiro 的崛起與承諾</h2>
+  <p style="margin-bottom:20px;">Kiro 於 2025 年 7 月由 AWS 推出，是基於 Code OSS 的 AI 驅動 IDE，以「Spec-Driven Development」為核心差異化特色，上線後迅速吸引數十萬開發者加入等候名單。</p>
+
+  <div class="quote">
+    「初始定價看起來合理：免費版 50 次互動、Pro $19/月 1,000 次互動、Pro+ $39/月 3,000 次互動，額外互動每次 $0.04。」
+    <span class="source">— The Register, 2025 年 8 月報導（內容經改寫）</span>
+  </div>
+
+  <h3>初始承諾的關鍵特點</h3>
+  <ul>
+    <li>一次「互動」可能包含 3–5 分鐘的持續 AI 迭代工作</li>
+    <li>計費單位簡單明瞭：一個問題 = 一次互動</li>
+    <li>開發者可以預測每月成本</li>
+  </ul>
+  <span class="slide-number">3 / 10</span>
+</div>
+
+<!-- ==================== SLIDE 4: Timeline ==================== -->
+<div id="slide-4" class="slide slide-content">
+  <h2>定價變革時間線</h2>
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="date">2025 年 7 月</div>
+      <div class="event">Kiro 公開預覽上線，公布「即將推出」的簡單互動制定價</div>
+    </div>
+    <div class="timeline-item">
+      <div class="date">2025 年 7 月下旬</div>
+      <div class="event">因過於熱門而引入等候名單，原始定價頁面悄然消失</div>
+    </div>
+    <div class="timeline-item">
+      <div class="date">2025 年 8 月中旬</div>
+      <div class="event">公布全新定價：引入 Spec/Vibe 雙軌請求制，價格大幅上調</div>
+    </div>
+    <div class="timeline-item">
+      <div class="date">2025 年 8 月 20 日</div>
+      <div class="event">AWS 承認存在計費 Bug，宣布 8 月免費並退款</div>
+    </div>
+    <div class="timeline-item">
+      <div class="date">2025 年 9 月</div>
+      <div class="event">再次改版為「Credit 制」，引入分數計費（0.01 credit 增量）</div>
+    </div>
+    <div class="timeline-item">
+      <div class="date">2026 年初</div>
+      <div class="event">Credit 制持續演進，複雜度計費使成本更加不可預測</div>
+    </div>
+  </div>
+  <span class="slide-number">4 / 10</span>
+</div>
+
+<!-- ==================== SLIDE 5: Comparison ==================== -->
+<div id="slide-5" class="slide slide-content">
+  <h2>新舊方案對比：數字說明一切</h2>
+  <table class="pricing-table">
+    <thead>
+      <tr>
+        <th>方案</th>
+        <th>初始承諾</th>
+        <th>修訂後方案</th>
+        <th>變化幅度</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Free</strong></td>
+        <td>50 次互動</td>
+        <td>50 Vibe / <span class="highlight-bad">0 Spec</span></td>
+        <td class="highlight-bad">Spec 功能完全移除</td>
+      </tr>
+      <tr>
+        <td><strong>Pro ($19→$20)</strong></td>
+        <td>1,000 次互動</td>
+        <td>225 Vibe + 125 Spec</td>
+        <td class="highlight-bad">總量降至 350（-65%）</td>
+      </tr>
+      <tr>
+        <td><strong>Pro+ ($39→$40)</strong></td>
+        <td>3,000 次互動</td>
+        <td>450 Vibe + 250 Spec</td>
+        <td class="highlight-bad">總量降至 700（-77%）</td>
+      </tr>
+      <tr>
+        <td><strong>Power（新增）</strong></td>
+        <td>不存在</td>
+        <td>$200/月：2,250 Vibe + 1,250 Spec</td>
+        <td class="highlight-bad">需 5 倍價格才接近原始額度</td>
+      </tr>
+      <tr>
+        <td><strong>額外 Spec 請求</strong></td>
+        <td>$0.04/次</td>
+        <td>$0.20/次</td>
+        <td class="highlight-bad">漲價 400%</td>
+      </tr>
+    </tbody>
+  </table>
+  <span class="slide-number">5 / 10</span>
+</div>
+
+<!-- ==================== SLIDE 6: Community Reaction ==================== -->
+<div id="slide-6" class="slide slide-dark">
+  <h2>社群反應：「錢包毀滅性悲劇」</h2>
+
+  <div class="quote">
+    「Kiro 的 spec-driven AI IDE 是一顆寶石⋯⋯直到我看到你們的新定價。」
+    <span class="source">— Antonio Ribeiro, 開源 PHP/Laravel 工程師, GitHub Issue #2182（內容經改寫）</span>
+  </div>
+
+  <div class="quote">
+    「Pro+ 的月度配額在單一聊天對話中 15 分鐘內就被完全消耗殆盡。」
+    <span class="source">— GitHub Issue #2171（內容經改寫）</span>
+  </div>
+
+  <div class="quote">
+    「實際使用中，我發一個請求，Kiro 已經消耗了四到六個 vibe 請求。它從來不只消耗一個。」
+    <span class="source">— Kiro Discord 社群用戶（內容經改寫）</span>
+  </div>
+
+  <div class="quote">
+    「我不明白為什麼定價不能像最初那樣簡單明瞭：token 花費多少、你用了多少 token，就這樣。」
+    <span class="source">— Hacker News 討論串（內容經改寫）</span>
+  </div>
+  <span class="slide-number">6 / 10</span>
+</div>
+
+<!-- ==================== SLIDE 7: Core Criticisms ==================== -->
+<div id="slide-7" class="slide slide-content">
+  <h2>五大核心批評</h2>
+  <div class="impact-list">
+    <div class="impact-item">
+      <div class="impact-icon">💸</div>
+      <div class="impact-text">
+        <h4>1. 成本不可預測性</h4>
+        <p>從固定「一問一答」變為依複雜度浮動計費，開發者無法事先估算月度支出。分數 credit 制（0.01 增量）讓計算更加困難。</p>
+      </div>
+    </div>
+    <div class="impact-item">
+      <div class="impact-icon">🔀</div>
+      <div class="impact-text">
+        <h4>2. 雙軌制造成混亂</h4>
+        <p>Spec 請求與 Vibe 請求的區分不直覺，且系統會自動將「過於複雜」的 Vibe 請求導向 Spec 請求，消耗更昂貴的配額。</p>
+      </div>
+    </div>
+    <div class="impact-item">
+      <div class="impact-icon">📉</div>
+      <div class="impact-text">
+        <h4>3. 實際額度大幅縮水</h4>
+        <p>表面價格僅微調（$19→$20），但可用互動次數從 1,000 驟降至 350，等效漲價超過 180%。</p>
+      </div>
+    </div>
+    <div class="impact-item">
+      <div class="impact-icon">🐛</div>
+      <div class="impact-text">
+        <h4>4. 計費 Bug 侵蝕信任</h4>
+        <p>上線即出現計費錯誤，單一任務消耗多倍請求。AWS 事後才承認 Bug 存在，但信任已受損。</p>
+      </div>
+    </div>
+    <div class="impact-item">
+      <div class="impact-icon">🚪</div>
+      <div class="impact-text">
+        <h4>5. 免費版形同虛設</h4>
+        <p>免費版完全移除 Spec 請求，等於 Kiro 最核心的差異化功能（Spec-Driven Development）對免費用戶關閉大門。</p>
+      </div>
+    </div>
+  </div>
+  <span class="slide-number">7 / 10</span>
+</div>
+
+<!-- ==================== SLIDE 8: User Impact ==================== -->
+<div id="slide-8" class="slide slide-content">
+  <h2>各類使用者的實際影響</h2>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="number">$550+</span>
+      <span class="label">開源開發者輕度使用<br>估算月費（原 $39）</span>
+    </div>
+    <div class="stat-card">
+      <span class="number">$1,950</span>
+      <span class="label">全職開發者<br>估算月費</span>
+    </div>
+    <div class="stat-card">
+      <span class="number">15 分鐘</span>
+      <span class="label">Pro+ 配額<br>被耗盡的時間</span>
+    </div>
+  </div>
+
+  <div class="comparison">
+    <div class="comparison-col before">
+      <h3>✓ 受影響族群</h3>
+      <ul style="list-style:none; padding:0;">
+        <li style="padding:6px 0;">• 獨立開發者 / 自由工作者</li>
+        <li style="padding:6px 0;">• 開源社群貢獻者</li>
+        <li style="padding:6px 0;">• 新創團隊（預算有限）</li>
+        <li style="padding:6px 0;">• 學生與教育用途</li>
+        <li style="padding:6px 0;">• 需要大量 AI 迭代的專案</li>
+      </ul>
+    </div>
+    <div class="comparison-col after">
+      <h3>✗ 造成的行為改變</h3>
+      <ul style="list-style:none; padding:0;">
+        <li style="padding:6px 0;">• 轉向競品（Cursor、Trae、Windsurf）</li>
+        <li style="padding:6px 0;">• 自我限制使用頻率</li>
+        <li style="padding:6px 0;">• 放棄 Spec 模式改用 Vibe</li>
+        <li style="padding:6px 0;">• 在社群發起抵制聲浪</li>
+        <li style="padding:6px 0;">• 考慮自建 GPU 方案</li>
+      </ul>
+    </div>
+  </div>
+  <span class="slide-number">8 / 10</span>
+</div>
+
+<!-- ==================== SLIDE 9: Competitor Comparison ==================== -->
+<div id="slide-9" class="slide slide-dark">
+  <h2>競品比較：市場正在懲罰 Kiro</h2>
+  <table class="pricing-table">
+    <thead>
+      <tr>
+        <th>工具</th>
+        <th>月費</th>
+        <th>額度 / 特色</th>
+        <th>透明度</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Kiro Pro+</strong></td>
+        <td>$40</td>
+        <td>450 Vibe + 250 Spec（實際可能更少）</td>
+        <td class="highlight-bad">低 — 隱性消耗</td>
+      </tr>
+      <tr>
+        <td><strong>Amazon Q Developer</strong></td>
+        <td>$40</td>
+        <td>3,000 請求</td>
+        <td class="highlight-good">高</td>
+      </tr>
+      <tr>
+        <td><strong>Cursor Pro</strong></td>
+        <td>$20</td>
+        <td>500 快速請求 + 無限慢速</td>
+        <td class="highlight-good">中高</td>
+      </tr>
+      <tr>
+        <td><strong>Trae</strong></td>
+        <td>免費</td>
+        <td>無限請求（速度較慢）</td>
+        <td class="highlight-good">高</td>
+      </tr>
+      <tr>
+        <td><strong>Windsurf</strong></td>
+        <td>$15</td>
+        <td>更高性價比的 credit 制</td>
+        <td class="highlight-good">中高</td>
+      </tr>
+      <tr>
+        <td><strong>自建 GPU (H100)</strong></td>
+        <td>~$119/人</td>
+        <td>10 人共享，無限制使用</td>
+        <td class="highlight-good">完全透明</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="quote" style="margin-top:30px;">
+    「Kiro 的競爭對手便宜得多，包括 Amazon 自家的 Q Developer（$40 換 3,000 請求）、Trae（無限請求）、以及 Windsurf。」
+    <span class="source">— Antonio Ribeiro, GitHub（內容經改寫）</span>
+  </div>
+  <span class="slide-number">9 / 10</span>
+</div>
+
+<!-- ==================== SLIDE 10: Conclusion ==================== -->
+<div id="slide-10" class="slide slide-title" style="text-align: left; align-items: flex-start;">
+  <h2 style="font-size: 2.4rem; color: white; margin-bottom: 30px; position: relative; z-index:1;">結論與建議</h2>
+
+  <div style="position: relative; z-index:1; width: 100%;">
+    <h3 style="color: var(--gold); font-size: 1.3rem; margin-bottom: 15px;">核心問題</h3>
+    <ul style="list-style: none; padding: 0; color: rgba(255,255,255,0.9); font-size: 1.1rem; line-height: 2;">
+      <li>▸ 從簡單可預測的互動制，轉向複雜不透明的 Token/Credit 制</li>
+      <li>▸ 實質大幅漲價卻包裝為「計費優化」</li>
+      <li>▸ 計費 Bug 暴露系統成熟度不足</li>
+      <li>▸ 免費版閹割核心功能，阻礙社群成長</li>
+    </ul>
+
+    <h3 style="color: var(--gold); font-size: 1.3rem; margin: 30px 0 15px;">對 Kiro 的建議</h3>
+    <ul style="list-style: none; padding: 0; color: rgba(255,255,255,0.9); font-size: 1.1rem; line-height: 2;">
+      <li>▸ 回歸簡單透明的計費模型，降低認知負擔</li>
+      <li>▸ 提供即時用量儀表板與成本預警機制</li>
+      <li>▸ 恢復免費版的 Spec 功能存取（即使有限）</li>
+      <li>▸ 建立明確的定價承諾，避免再次「先甜後苦」</li>
+    </ul>
+
+    <p style="color: rgba(255,255,255,0.5); font-size: 0.9rem; margin-top: 50px;">
+      資料來源：The Register、Hacker News、GitHub Issues、Kiro 官方部落格、TechZine、InfoWorld<br>
+      Content was rephrased for compliance with licensing restrictions.
+    </p>
+  </div>
+  <span class="slide-number" style="color: rgba(255,255,255,0.3);">10 / 10</span>
+</div>
+
+<script>
+  // Smooth scroll and active tab highlighting
+  document.documentElement.style.scrollBehavior = 'smooth';
+
+  const navLinks = document.querySelectorAll('.nav-bar a');
+  const slides = document.querySelectorAll('.slide');
+
+  function updateActiveNav() {
+    let current = '';
+    slides.forEach(slide => {
+      const rect = slide.getBoundingClientRect();
+      if (rect.top <= 100 && rect.bottom > 100) {
+        current = slide.id;
+      }
+    });
+    navLinks.forEach(link => {
+      link.classList.remove('active');
+      if (link.getAttribute('href') === '#' + current) {
+        link.classList.add('active');
+      }
+    });
+  }
+
+  window.addEventListener('scroll', updateActiveNav);
+  updateActiveNav();
+</script>
+
+</body>
+</html>
